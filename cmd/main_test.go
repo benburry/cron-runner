@@ -12,6 +12,7 @@ import (
 
 func TestNew(t *testing.T) {
 	config.CRON_METRICS = false
+	config.CRON_VERIFY_ACTIVE = false
 
 	args := []string{"echo", "hello world"}
 	cron, _ := New(args)
@@ -29,6 +30,7 @@ func TestNew(t *testing.T) {
 
 func TestNewNoArgs(t *testing.T) {
 	config.CRON_METRICS = false
+	config.CRON_VERIFY_ACTIVE = false
 
 	args := []string{}
 
@@ -47,6 +49,7 @@ func TestNewNoArgs(t *testing.T) {
 
 func TestRunSimpleSuccess(t *testing.T) {
 	config.CRON_METRICS = false
+	config.CRON_VERIFY_ACTIVE = false
 
 	args := []string{"echo", "hello world"}
 	cron, _ := New(args)
@@ -67,6 +70,7 @@ func TestRunSimpleSuccess(t *testing.T) {
 
 func TestRunRubySuccess(t *testing.T) {
 	config.CRON_METRICS = false
+	config.CRON_VERIFY_ACTIVE = false
 
 	args := []string{"ruby", "-e", "puts 'hello world'"}
 	cron, _ := New(args)
@@ -87,6 +91,7 @@ func TestRunRubySuccess(t *testing.T) {
 
 func TestRunSimpleFailStatus(t *testing.T) {
 	config.CRON_METRICS = false
+	config.CRON_VERIFY_ACTIVE = false
 
 	args := []string{"false"}
 	cron, _ := New(args)
@@ -108,6 +113,7 @@ func TestRunSimpleFailStatus(t *testing.T) {
 
 func TestRunExitCode1(t *testing.T) {
 	config.CRON_METRICS = false
+	config.CRON_VERIFY_ACTIVE = false
 
 	args := []string{"test", "-f", "/tmp/does_not_exist"}
 	cron, _ := New(args)
@@ -126,6 +132,7 @@ func TestRunExitCode1(t *testing.T) {
 // TestRunExitCode126 tests the exit code when permission is denied
 func TestRunExitCode126(t *testing.T) {
 	config.CRON_METRICS = false
+	config.CRON_VERIFY_ACTIVE = false
 
 	args := []string{"/dev/null"}
 	cron, _ := New(args)
@@ -144,6 +151,7 @@ func TestRunExitCode126(t *testing.T) {
 // TestRunExitCode127 tests the exit code when the command is not found
 func TestRunExitCode127(t *testing.T) {
 	config.CRON_METRICS = false
+	config.CRON_VERIFY_ACTIVE = false
 
 	args := []string{"invalidornonexistentcommand"}
 	cron, _ := New(args)
@@ -163,6 +171,7 @@ func TestRunExitCode127(t *testing.T) {
 // a typical example is when the user presses Ctrl+C
 func TestRunSigInterrupted(t *testing.T) {
 	config.CRON_METRICS = false
+	config.CRON_VERIFY_ACTIVE = false
 
 	args := []string{"sleep", "5"}
 	cron, _ := New(args)
@@ -196,6 +205,7 @@ func TestRunSigInterrupted(t *testing.T) {
 // a typical example is when the user runs `kill <pid>`
 func TestRunSigTerminated(t *testing.T) {
 	config.CRON_METRICS = false
+	config.CRON_VERIFY_ACTIVE = false
 
 	args := []string{"sleep", "5"}
 	cron, _ := New(args)
@@ -227,6 +237,7 @@ func TestRunSigTerminated(t *testing.T) {
 
 func TestRunTimeout(t *testing.T) {
 	config.CRON_METRICS = false
+	config.CRON_VERIFY_ACTIVE = false
 
 	// Set a very short timeout for the test
 	config.CRON_TIMEOUT = 1
@@ -245,8 +256,28 @@ func TestRunTimeout(t *testing.T) {
 	}
 }
 
+func TestRunMissingActiveFile(t *testing.T) {
+	config.CRON_METRICS = false
+	config.CRON_VERIFY_ACTIVE = true
+	config.CRON_ACTIVE_FILE = "this_file_does_not_exist"
+
+	args := []string{"sleep", "1"}
+	cron, _ := New(args)
+
+	cron.Run()
+
+	if cron.StatusCode != CRON_STATUS_FAIL {
+		t.Errorf("Expected status code %d, got %d", CRON_STATUS_FAIL, cron.StatusCode)
+	}
+
+	if cron.ExitCode != CRON_EXITCODE_FAIL_NOT_ACTIVE {
+		t.Errorf("Expected exit code %d, got %d", CRON_EXITCODE_FAIL_NOT_ACTIVE, cron.ExitCode)
+	}
+}
+
 func TestCronDuration(t *testing.T) {
 	config.CRON_METRICS = false
+	config.CRON_VERIFY_ACTIVE = false
 	config.CRON_TIMEOUT = 3
 
 	args := []string{"sleep", "1"}
@@ -275,6 +306,7 @@ func TestCronDuration(t *testing.T) {
 func TestMetricsNamespace(t *testing.T) {
 	config.CRON_NAMESPACE = "test namespace"
 	config.CRON_METRICS = false
+	config.CRON_VERIFY_ACTIVE = false
 
 	args := []string{"echo", "hello"}
 	cron, _ := New(args)
@@ -290,6 +322,7 @@ func TestMetricsNamespace(t *testing.T) {
 func TestMetricsNamespaceCapsAndDash(t *testing.T) {
 	config.CRON_NAMESPACE = "TEST-nameSPACE"
 	config.CRON_METRICS = false
+	config.CRON_VERIFY_ACTIVE = false
 
 	args := []string{"echo", "hello"}
 	cron, _ := New(args)
@@ -305,6 +338,7 @@ func TestMetricsNamespaceCapsAndDash(t *testing.T) {
 func TestMetricsWithNamespaceSpecialChars(t *testing.T) {
 	config.CRON_NAMESPACE = "TEST-nameSPACE!@$%^&*()-=+"
 	config.CRON_METRICS = false
+	config.CRON_VERIFY_ACTIVE = false
 
 	args := []string{"echo", "hello"}
 	cron, _ := New(args)
@@ -320,6 +354,7 @@ func TestMetricsWithNamespaceSpecialChars(t *testing.T) {
 func TestWriteMetricsWithNamespaceSpecialCharsWithSpaces(t *testing.T) {
 	config.CRON_NAMESPACE = "TEST-nameSPACE!@$%^&*()-=+ TEST AGAIN"
 	config.CRON_METRICS = false
+	config.CRON_VERIFY_ACTIVE = false
 
 	args := []string{"echo", "hello"}
 	cron, _ := New(args)
@@ -335,6 +370,7 @@ func TestWriteMetricsWithNamespaceSpecialCharsWithSpaces(t *testing.T) {
 func TestWriteMetricsWithNamespaceWithFilepath(t *testing.T) {
 	config.CRON_NAMESPACE = "TEST-nameSPACE!@$%^&*()-=+ TEST AGAIN"
 	config.CRON_METRICS = false
+	config.CRON_VERIFY_ACTIVE = false
 
 	args := []string{"cat", "/tmp/does_not_exist/this/should/not/exist.txt"}
 	cron, _ := New(args)
