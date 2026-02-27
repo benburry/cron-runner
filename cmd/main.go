@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -88,9 +90,10 @@ func (c *Cron) GetStatusCodeName(code ...int) string {
 
 // EXIT CODES
 const (
-	CRON_EXITCODE_UNKNOWN      = -1
-	CRON_EXITCODE_SUCCESS      = 0
-	CRON_EXITCODE_FAIL_GENERIC = 1
+	CRON_EXITCODE_UNKNOWN         = -1
+	CRON_EXITCODE_SUCCESS         = 0
+	CRON_EXITCODE_FAIL_GENERIC    = 1
+	CRON_EXITCODE_FAIL_NOT_ACTIVE = 2
 
 	// special exit codes (https://tldp.org/LDP/abs/html/exitcodes.html
 
@@ -105,6 +108,7 @@ var (
 		{CRON_EXITCODE_UNKNOWN, "UNKNOWN"},
 		{CRON_EXITCODE_SUCCESS, "SUCCESS"},
 		{CRON_EXITCODE_FAIL_GENERIC, "FAIL_GENERIC"},
+		{CRON_EXITCODE_FAIL_NOT_ACTIVE, "FAIL_NOT_ACTIVE"},
 		{CRON_EXITCODE_PERM_DENIED, "PERM_DENIED"},
 		{CRON_EXITCODE_EXEC_NOT_FOUND, "EXEC_NOT_FOUND"},
 		{CRON_EXITCODE_SIG_INT, "SIG_INT"},
@@ -175,6 +179,8 @@ func usage() {
 	fmt.Printf("  CRON_METRICS_PREFIX: %s\n", config.CRON_METRICS_PREFIX)
 	fmt.Printf("  CRON_NAMESPACE: %s\n", config.CRON_NAMESPACE)
 	fmt.Printf("  CRON_DRYRUN: %t\n", config.CRON_DRYRUN)
+	fmt.Printf("  CRON_VERIFY_ACTIVE: %t\n", config.CRON_VERIFY_ACTIVE)
+	fmt.Printf("  CRON_ACTIVE_FILE: %s\n", config.CRON_ACTIVE_FILE)
 }
 
 func New(args []string) (*Cron, error) {
@@ -250,6 +256,16 @@ func (c *Cron) start() {
 		fmt.Printf("DRYRUN: Args: %v\n", c.Args)
 		fmt.Printf("DRYRUN: Timeout: %v\n", config.CRON_TIMEOUT)
 		return
+	}
+
+	if config.CRON_VERIFY_ACTIVE {
+		_, err := os.Stat(config.CRON_ACTIVE_FILE)
+		if errors.Is(err, fs.ErrNotExist) || errors.Is(err, fs.ErrPermission) {
+			fmt.Printf("ERROR: Unable to stat CRON_ACTIVE_FILE:%v\n", err)
+			c.StatusCode = CRON_STATUS_FAIL
+			c.ExitCode = CRON_EXITCODE_FAIL_NOT_ACTIVE
+			return
+		}
 	}
 
 	// write metrics file so we know its running

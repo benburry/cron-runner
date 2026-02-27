@@ -78,6 +78,8 @@ These options can be passed to `cron-runner` per command or set as global enviro
 | `CRON_METRICS`       | Set to false to turn off the creation of the metrics file                                         | True                                         |
 | `CRON_METRICS_PREFIX`| Sets the prefix for the Prometheus metrics name                                                   | None, empty (generated)                      |
 | `CRON_METRICS_DIR`   | Directory to save the metrics files. This is the default Node Exporter directory                  | `/var/lib/node_exporter/textfile_collector`  |
+| `CRON_VERIFY_ACTIVE` | If set to true, gate execution on the existence of `CRON_ACTIVE_FILE`                             | False                                        |
+| `CRON_ACTIVE_FILE  ` | A file that must exist for crons to be run, if `CRON_VERIFY_ACTIVE` is True                       | None, empty                                  |
 
 
 ## Metrics

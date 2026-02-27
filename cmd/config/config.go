@@ -13,6 +13,8 @@ var (
 	CRON_METRICS        bool
 	CRON_METRICS_PREFIX = EnvStr("CRON_METRICS_PREFIX", "")                                       // *optional*
 	CRON_METRICS_DIR    = EnvStr("CRON_METRICS_DIR", "/var/lib/node_exporter/textfile_collector") // NO TRAILING SLASH :)
+	CRON_VERIFY_ACTIVE  bool
+	CRON_ACTIVE_FILE    = EnvStr("CRON_ACTIVE_FILE", "")
 )
 
 func init() {
@@ -24,6 +26,10 @@ func init() {
 	CRON_METRICS, err = EnvBool("CRON_METRICS", true) // *optional*
 	if err != nil {
 		fmt.Printf("Error retrieving CRON_METRICS: %v\n", err)
+	}
+	CRON_VERIFY_ACTIVE, err = EnvBool("CRON_VERIFY_ACTIVE", false) // *optional*
+	if err != nil {
+		fmt.Printf("Error retrieving CRON_VERIFY_ACTIVE: %v\n", err)
 	}
 }
 
